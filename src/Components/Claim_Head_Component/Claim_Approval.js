@@ -66,7 +66,7 @@ const ClaimApproval = () => {
     const { claim_Id, status, paid_Amount, note } = data[rowIndex];
 
     try {
-      await axios.post('https://webdocinsuranceportalAPI.webddocsystems.com/ClaimCompleted', null, {
+      await axios.post(`${BASE_URL}ClaimCompleted`, null, {
         params: {
           claim_Id,
           Status: status,

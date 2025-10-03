@@ -64,6 +64,11 @@ const Key_Account_Manager_Product = () => {
       sortable: true,
     },
     {
+      name: "Product Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+    {
       name: "Company",
       selector: (row) => row.companyName,
       sortable: true,

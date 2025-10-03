@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Form, Button, Row, Col, Alert } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../Config";
 import Swal from 'sweetalert2';
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const ChangeinProduct = () => {
-  const { productId } = useParams(); // Extract the productId from the URL
+  const { productId } = useParams();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState({
     id: '',
     productName: '',
@@ -20,30 +23,23 @@ const ChangeinProduct = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
-  // Fetch product details based on productId
   useEffect(() => {
     if (productId) {
       setLoading(true);
-      axios
-        .get(`${BASE_URL}ProductbyId?productId=${productId}`)
+      axios.get(`${BASE_URL}ProductbyId?productId=${productId}`)
         .then((response) => {
           if (response.data && response.data.product) {
             const productData = response.data.product;
             const formattedPrice = productData.price.replace('Rs.', '').trim();
-            setProduct({
-              ...productData,
-              price: formattedPrice,
-            });
-            console.log('Fetched product:', response.data.product);
+            setProduct({ ...productData, price: formattedPrice });
           } else {
             setError('Product not found.');
           }
         })
         .catch((err) => {
-          setError('Error fetching product details.');
           console.error('Error fetching product:', err);
+          setError('Error fetching product details.');
         })
         .finally(() => {
           setLoading(false);
@@ -51,220 +47,227 @@ const ChangeinProduct = () => {
     }
   }, [productId]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProduct((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
-    // Ensure that the price includes the 'Rs.' prefix
     const payload = {
       ...product,
-      price: `Rs.${product.price}`, // Formatting price with Rs.
+      price: `Rs.${product.price}`,
+      duration: "1 Day", // Or dynamic duration logic
     };
 
+    const params = new URLSearchParams(payload).toString();
+
     try {
-      // Constructing URL with query parameters
-      const params = new URLSearchParams({
-        id: product.id,
-        companyName: product.companyName,
-        productName: product.productName,
-        price: product.price,
-        masking: product.masking,
-        planType: product.planType,
-        coverage: product.coverage,
-        details: product.details,
-        duration: '1 Day' // Or use product.duration if you have it
-      }).toString();
-
-      console.log('Sending data:', params); // Log data for debugging
-
       const response = await axios.post(`${BASE_URL}ProductEdit?${params}`, {}, {
-        headers: {
-          'accept': '*/*',
-        },
+        headers: { accept: "*/*" },
       });
 
-      console.log('Response from backend:', response.data); // Log backend response
-
-      if (response.data) {
-        if (response.data.responseCode === '0000') {
-          // Success alert
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: response.data.message || 'Product updated successfully!',
-          });
-        } else if (response.data.responseCode === '0001') {
-          // Custom alert for responseCode 0001
-          Swal.fire({
-            icon: 'warning',
-            title: 'Warning',
-            text: response.data.message || 'Warning! There was an issue updating the product.',
-          });
-        } else {
-          // General error alert
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: response.data.message || 'There was an error updating the product.',
-          });
-        }
+      if (response.data?.responseCode === '0000') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.data.message || 'Product updated successfully!',
+        }).then(() => {
+          navigate('/products');
+        });
+      } else {
+        Swal.fire({
+          icon: response.data?.responseCode === '0001' ? 'warning' : 'error',
+          title: response.data?.responseCode === '0001' ? 'Warning' : 'Error',
+          text: response.data.message || 'There was an issue updating the product.',
+        });
       }
     } catch (err) {
-      // Catch error for the request
+      console.error('Error updating product:', err);
       Swal.fire({
         icon: 'error',
         title: 'Error',
         text: 'There was an error updating the product.',
       });
-      console.error('Error updating product:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProduct((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
   return (
-    <Container className="mt-4">
-      <div className="card shadow-sm">
-        <div className="card-header text-center bg-primary text-white">
-          <h2>Edit Product</h2>
-        </div>
-        <div className="card-body">
-          {error && <Alert variant="danger">{error}</Alert>}
-          {success && <Alert variant="success">{success}</Alert>}
-
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              {/* Product ID - Read-only */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="productId">
-                  <Form.Label>Product ID</Form.Label>
-                  <Form.Control type="text" value={product.id} readOnly />
-                </Form.Group>
-              </Col>
-
-              {/* Product Name */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="productName">
-                  <Form.Label>Product Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Product Name"
-                    name="productName"
-                    value={product.productName}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Company Name */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="companyName">
-                  <Form.Label>Company Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Company Name"
-                    name="companyName"
-                    value={product.companyName}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Price */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="price">
-                  <Form.Label>Price</Form.Label>
-                  <Form.Control
-                    type="number"
-                    placeholder="Enter Price"
-                    name="price"
-                    value={product.price}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Masking */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="masking">
-                  <Form.Label>Masking</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Masking"
-                    name="masking"
-                    value={product.masking}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Plan Type */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="planType">
-                  <Form.Label>Plan Type</Form.Label>
-                  <Form.Control
-                    as="select"
-                    name="planType"
-                    value={product.planType}
-                    onChange={handleChange}
-                  >
-                    <option value="Daily">Daily</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="6 Month">6 Month</option>
-                    <option value="Yearly">Yearly</option>
-                  </Form.Control>
-                </Form.Group>
-              </Col>
-
-              {/* Coverage */}
-              <Col md={6} className="mb-3">
-                <Form.Group controlId="coverage">
-                  <Form.Label>Coverage</Form.Label>
-                  <Form.Control
-                    type="number"
-                    placeholder="Enter Coverage"
-                    name="coverage"
-                    value={product.coverage}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Details */}
-              <Col md={12} className="mb-3">
-                <Form.Group controlId="details">
-                  <Form.Label>Details</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={5}
-                    placeholder="Enter Product Details"
-                    name="details"
-                    value={product.details}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <div className="d-flex justify-content-center">
-              <Button variant="primary" type="submit" className="w-50" disabled={loading}>
-                {loading ? 'Updating...' : 'Update Product'}
-              </Button>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-10 col-lg-8">
+          <div className="card shadow-sm">
+            <div className="card-header bg-primary text-white text-center">
+              <h2>Edit Product</h2>
             </div>
-          </Form>
+
+            <div className="card-body">
+              {error && <p className="text-danger text-center">{error}</p>}
+              <form onSubmit={handleSubmit}>
+                <div className="row">
+                  {/* Product ID */}
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Product ID:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={product.id}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Product Name:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="productName"
+                      value={product.productName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+ <div className="col-md-6 mb-3">
+                    <label className="form-label">Product Status:</label>
+                   <select
+  className="form-control"
+  name="status"
+  value={product.status}
+  onChange={handleChange}
+  required
+>
+  <option value="">-- Select Status --</option>
+  <option value="Active">Active</option>
+  <option value="In-Active">In-Active</option>
+</select>
+
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Company Name:</label>
+                    <select
+  className="form-control"
+  name="companyName"
+  value={product.companyName}
+  onChange={handleChange}
+  required
+>
+  <option value="">-- Select Company --</option>
+  <option value="Jazz_Insurance_Platform">Jazz Insurance Platform</option>
+  <option value="MiniApp">MiniApp</option>
+  <option value="Jazz">Jazz</option>
+  <option value="Ufone">Ufone</option>
+  <option value="UPaisa">UPaisa</option>
+  <option value="Zong">Zong</option>
+  <option value="Telenor">Telenor</option>
+  <option value="WebDoc">WebDoc</option>
+  <option value="JazzCash">JazzCash</option>
+  <option value="HealthLine">HealthLine</option>
+  <option value={product.companyName}>
+    {product.companyName} {/* This ensures the current saved value is also visible even if it's not in the list */}
+  </option>
+</select>
+
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Price:</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="price"
+                      value={product.price}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Masking/HelplineNo:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="masking"
+                      value={product.masking}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Plan Type:</label>
+                    <select
+                      className="form-control"
+                      name="planType"
+                      value={product.planType}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">-- Select Plan Type --</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Monthly">Monthly</option>
+                      <option value="6 Month">6 Month</option>
+                      <option value="Yearly">Yearly</option>
+                    </select>
+                  </div>
+
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label">Coverage:</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="coverage"
+                      value={product.coverage}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-md-12 mb-3">
+                    <label className="form-label">Details/Features:</label>
+                    <ReactQuill
+                      value={product.details}
+                      onChange={(value) => handleChange({ target: { name: "details", value } })}
+                      modules={{
+                        toolbar: [
+                          [{ header: "1" }, { header: "2" }, { font: [] }],
+                          [{ list: "ordered" }, { list: "bullet" }],
+                          ["bold", "italic", "underline"],
+                          ["link"],
+                          [{ align: [] }],
+                          ["image"],
+                        ],
+                      }}
+                      className="form-control"
+                      style={{ height: "250px" }}
+                    />
+                    <small className="form-text text-muted">
+                      Use the toolbar to format your text (bold, italics, lists, etc.).
+                    </small>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="card-footer text-center">
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? "Updating..." : "Update Product"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </Container>
+    </div>
   );
 };
 

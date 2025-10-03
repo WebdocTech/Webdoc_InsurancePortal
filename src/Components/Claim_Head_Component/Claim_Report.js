@@ -76,7 +76,7 @@ const Claim_Report = () => {
     );
   }, [searchTerm, reportData]);
   const handleDetailsClick = (customerMobileNo, claim_No) => {
-    navigate(`/Claim_Details/${customerMobileNo}/${claim_No}`);
+    window.open(`/Claim_Details/${customerMobileNo}/${claim_No}`);
   };
   const columns = [
     { name: "Claim Number", selector: (row) => row.claimNumber, sortable: true },
@@ -94,6 +94,7 @@ const Claim_Report = () => {
               variant="primary"
               onClick={() => handleDetailsClick(row.mobileNumber, row.claimNumber)}
               className="m-2"
+
             >
               Claim Details
             </Button>

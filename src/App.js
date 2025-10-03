@@ -15,6 +15,10 @@ import SendSMS from './Pages/SendSMS';
 import ProtectedRoute from './ProtectedRoute';
 import ProductCreate from './Pages/ProductCreate';
 import ProductEdit from './Pages/ProductEdit';
+import TelenorCharging from "./Components/PolicyCheck/Telenor_Charging";
+import ZongCharging from "./Components/PolicyCheck/Zong_Charging";
+import UfoneCharging from "./Components/PolicyCheck/Ufone_Charging";
+import JazzCharging from "./Components/PolicyCheck/Jazz_Charging";
 
 import './App.css';
 
@@ -46,6 +50,10 @@ const user = JSON.parse(sessionStorage.getItem("user"));
           <Route path="/Claim_Details/:customerMobileNo/:claimNo" component={Claim_Details} />
           <Route path="/CheckPolicy" element={<ProtectedRoute isLoggedIn={isLoggedIn}><CheckPolicy /></ProtectedRoute>} />
           <Route path="/ClaimRecord/:msisdn" element={<ProtectedRoute isLoggedIn={isLoggedIn}><ClaimRecord /></ProtectedRoute>} />
+          <Route path="/telenor-charging" element={<TelenorCharging />} />
+          <Route path="/zong-charging" element={<ZongCharging />} />
+          <Route path="/ufone-charging" element={<UfoneCharging />} />
+          <Route path="/jazz-charging" element={<JazzCharging />} />
 
           <Route path="/Claim_ApprovalPending" element={<ProtectedRoute isLoggedIn={isLoggedIn}><Claim_ApprovalPending /></ProtectedRoute>} />
           {/* <Route path="/PendingClaim" element={<ProtectedRoute isLoggedIn={isLoggedIn}><PendingClaim /></ProtectedRoute>} /> */}

@@ -1,16 +1,22 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-function ProtectedRoute({ children }) {
-  // Retrieve user data from sessionStorage and handle empty or corrupted data
+function ProtectedRoute({ children, allowedRoles = [] }) {
+  // Safely parse user from sessionStorage
   const user = JSON.parse(sessionStorage.getItem('user')) || null;
 
-  // If no user data is found or the user is not logged in, redirect to the login page
+  // If no user is logged in, redirect to login page
   if (!user) {
-    return <Navigate to="/login" />;  // Adjust the path to your actual login page
+    return <Navigate to="/login" replace />;
   }
 
-  // If the user is logged in, allow access to the protected route
+  // If allowedRoles is provided, check if user role is included
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.userRole)) {
+    // User is logged in but not authorized, redirect to permission denied page
+    return <Navigate to="/PermissionNotAllowed" replace />;
+  }
+
+  // User is authorized, render the protected component
   return children;
 }
 

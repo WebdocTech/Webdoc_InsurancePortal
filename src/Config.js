@@ -1,8 +1,10 @@
-// const BASE_URL = "https://localhost:7232/";  ////FOr testing locan run
- 
+// const BASE_URL = "https://localhost:7232/";  
+ const Chargingcheck_URL = "http://localhost:3500/";
+
 
 const BASE_URL = "https://webdocinsuranceportalapi.webddocsystems.com/";
+// const Chargingcheck_URL = "https://webdocinsuranceportalapi.webddocsystems.com/";
 
-const SMSURL = "http://digital.webdoc.com.pk:3100/";
+// const SMSURL = "http://digital.webdoc.com.pk:3100/";
 
-export { BASE_URL,SMSURL };
+export { BASE_URL, Chargingcheck_URL };
